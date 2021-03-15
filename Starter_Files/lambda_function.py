@@ -98,7 +98,26 @@ def recommend_portfolio(intent_request):
         # for the first violation detected.
 
         ### YOUR DATA VALIDATION CODE STARTS HERE ###
+        # Gets all the slots
+        slots = get_slots(intent_request)
 
+        # Validates user's input using the validate_data function
+        validation_result = validate_data(age, investmentAmount)
+
+        # If the data provided by the user is not valid,
+        # the elicitSlot dialog action is used to re-prompt for the first violation detected.
+
+        if not validation_result["isValid"]:
+            slots[validation_result["violatedSlot"]] = None  # Cleans invalid slot
+
+            # Returns an elicitSlot dialog to request new data for the invalid slot
+            return elicit_slot(
+                intent_request["sessionAttributes"],
+                intent_request["currentIntent"]["name"],
+                slots,
+                validation_result["violatedSlot"],
+                validation_result["message"],
+            )
         ### YOUR DATA VALIDATION CODE ENDS HERE ###
 
         # Fetch current session attibutes
@@ -109,6 +128,8 @@ def recommend_portfolio(intent_request):
     # Get the initial investment recommendation
 
     ### YOUR FINAL INVESTMENT RECOMMENDATION CODE STARTS HERE ###
+
+    initial_recommendation = get_investment_recommendation(riskLevel)
 
     ### YOUR FINAL INVESTMENT RECOMMENDATION CODE ENDS HERE ###
 
@@ -126,6 +147,32 @@ def recommend_portfolio(intent_request):
         },
     )
 
+### Data Validation ###
+
+def get_investment_recommendation(riskLevel):
+    """
+    Computes recommended investment amount.
+        none: "100% bonds (AGG), 0% equities (SPY)"
+        very low: "80% bonds (AGG), 20% equities (SPY)"
+        low: "60% bonds (AGG), 40% equities (SPY)"
+        medium: "40% bonds (AGG), 60% equities (SPY)"
+        high: "20% bonds (AGG), 80% equities (SPY)"
+        very high: "0% bonds (AGG), 100% equities (SPY)"
+    """
+    if riskLevel == "None":
+        return "100% bonds (AGG), 0% equities (SPY)"
+    elif riskLevel == "Low":
+        return "60% bonds (AGG), 40% equities (SPY)"
+    elif riskLevel == "Medium":
+        return "40% bonds (AGG), 60% equities (SPY)"
+    elif riskLevel == "High":
+        return "20% bonds (AGG), 80% equities (SPY)"
+    elif riskLevel == "Very Low":
+        return "80% bonds (AGG), 20% equities (SPY)"
+    elif riskLevel == "Very High":
+        return "0% bonds (AGG), 100% equities (SPY)"
+    else:
+        return None
 
 ### Intents Dispatcher ###
 def dispatch(intent_request):
